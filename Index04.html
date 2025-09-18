@@ -71,7 +71,7 @@ async function calculate() {
 
     const usdSell = parseFloat(data.usdCashSell);
     if (!isNaN(usdSell)) {
-      const customRate = usdSell + 0.5;
+      const customRate = usdSell + 0.8;
       customRateDisplay = customRate.toFixed(3);
       twdTotal = Math.ceil(parseFloat(usdTotal) * customRate);
     }
@@ -100,6 +100,7 @@ async function calculate() {
 </script>
 </body>
 </html>
+
 
 
 
