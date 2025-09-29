@@ -137,8 +137,8 @@ async function calculate() {
     const actualLb     = Math.ceil(weightKg / 0.454);
     const chargeableLb = Math.max(volumetricLb, actualLb);
 
-    // 運費公式：首磅30 + 續磅3.99 * (chargeableLb - 1)
-    const usdAmount = 30 + (chargeableLb > 1 ? (chargeableLb - 1) * 3.99 : 0);
+    // 運費公式：首磅30 + 續磅4.69 * (chargeableLb - 1)
+    const usdAmount = 30 + (chargeableLb > 1 ? (chargeableLb - 1) * 4.69 : 0);
     totalLb += chargeableLb;
     totalUsd += usdAmount;
 
@@ -177,4 +177,5 @@ async function calculate() {
 </script>
 </body>
 </html>
+
 
