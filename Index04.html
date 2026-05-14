@@ -12,6 +12,7 @@
   button {margin-top:15px; padding:8px 15px;}
   #packages {margin-top:20px;}
   .pkg-block {border:1px solid #ccc; padding:15px; margin-top:15px; background:#f9f9f9;}
+  .surcharge {color:#b00020; font-weight:bold;}
 </style>
 </head>
 
@@ -100,14 +101,49 @@ async function calculate(){
     const actLb=Math.ceil(kg/0.454);
     const chgLb=Math.max(volLb,actLb);
 
+    const sides=[L,W,H].sort((a,b)=>b-a);
+    const longest=sides[0];
+    const second=sides[1];
+    const shortest=sides[2];
+    const lengthPlusGirth=longest + 2*second + 2*shortest;
+
+    let dimensionSurcharge=0;
+    let oversizeSurcharge=0;
+    let weightSurcharge=0;
+    let surchargeText='';
+
+    if(longest>46 || second>28 || lengthPlusGirth>100){
+      dimensionSurcharge=35;
+      surchargeText += `<span class="surcharge">額外服務附加費 – 尺寸：$35</span><br>`;
+    }
+
+    if(longest>90 || lengthPlusGirth>120){
+      oversizeSurcharge=85;
+      surchargeText += `<span class="surcharge">超大尺寸費用：$85</span><br>`;
+    }
+
+    if(volLb>=50 || actLb>=50){
+      weightSurcharge=35;
+      surchargeText += `<span class="surcharge">額外服務附加費 – 重量：$35</span><br>`;
+    }
+
+    if(!surchargeText){
+      surchargeText='無附加費<br>';
+    }
+
+    const surchargeTotal=dimensionSurcharge + oversizeSurcharge + weightSurcharge;
+
     totalLb+=chgLb;
-    packages.push({i,L,W,H,volLb,actLb,chgLb});
+    packages.push({
+      i,L,W,H,volLb,actLb,chgLb,
+      longest,second,shortest,lengthPlusGirth,
+      surchargeText,surchargeTotal
+    });
   }
 
   let 续磅价=null;
   if(totalLb<50){
-    output.innerHTML=`<div class="pkg-block"><strong>合併重量 ${totalLb} 磅</strong><br>請聯絡客服人員</div>`;
-    return;
+    续磅价=7;
   }else if(totalLb<160){
     续磅价=6.49;
   }else{
@@ -117,6 +153,7 @@ async function calculate(){
   let html='';
   let totalBeforeDiscount=0;
   let totalAfterDiscount=0;
+  let totalSurcharge=0;
 
   packages.forEach(p=>{
     const base = 30 + (p.chgLb > 1 ? (p.chgLb - 1) * 续磅价 : 0);
@@ -124,6 +161,7 @@ async function calculate(){
 
     totalBeforeDiscount += base;
     totalAfterDiscount += discounted;
+    totalSurcharge += p.surchargeTotal;
 
     const twdBefore = finalRate ? Math.ceil(base * finalRate) : 'N/A';
     const twdAfter = finalRate ? Math.ceil(discounted * finalRate) : 'N/A';
@@ -132,16 +170,23 @@ async function calculate(){
       <div class="pkg-block">
         <strong>第 ${p.i} 件</strong><br>
         尺寸：${p.L} × ${p.W} × ${p.H} in<br>
+        最長邊：${p.longest} in｜第二長邊：${p.second} in<br>
+        長度加周長：${p.longest} + 2 × ${p.second} + 2 × ${p.shortest} = ${p.lengthPlusGirth} in<br>
         材積重：${p.volLb} lb<br>
         實重：${p.actLb} lb<br>
-        計費重：${p.chgLb} lb<br>
+        計費重：${p.chgLb} lb<br><br>
+
         原始運費：$${base.toFixed(2)} / NT$${twdBefore}<br>
-        折扣後運費：$${discounted.toFixed(2)} / NT$${twdAfter}
+        折扣後運費：$${discounted.toFixed(2)} / NT$${twdAfter}<br><br>
+
+        <strong>附加費：</strong><br>
+        ${p.surchargeText}
+        附加費小計：$${p.surchargeTotal.toFixed(2)}
       </div>`;
   });
 
   const pickup = count * 5;
-  const totalFinal = totalAfterDiscount + pickup;
+  const totalFinal = totalAfterDiscount + pickup + totalSurcharge;
   const totalTwd = finalRate ? Math.ceil(totalFinal * finalRate) : 'N/A';
 
   html += `
@@ -152,6 +197,7 @@ async function calculate(){
       折扣前運費合計：$${totalBeforeDiscount.toFixed(2)}<br>
       折扣後運費合計：$${totalAfterDiscount.toFixed(2)}<br>
       取件費：$${pickup.toFixed(2)}<br>
+      附加費合計：$${totalSurcharge.toFixed(2)}<br>
       <strong>應付總額：$${totalFinal.toFixed(2)} / NT$${totalTwd}</strong><br>
       匯率：${finalRate ? finalRate.toFixed(3) : 'N/A'}
     </div>
